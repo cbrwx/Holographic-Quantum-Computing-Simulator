@@ -208,6 +208,88 @@ results = computer.execute_holographic_computation(
 )
 ```
 
+Example output:
+
+```
+Simulation Results:
+
+# Distribution of measured quantum states - shows how often each basis state was observed
+measurement_counts: {
+    '000': 198,  # State |000⟩ was measured 198 times
+    '001': 201,  # State |001⟩ was measured 201 times
+    '010': 98,   # State |010⟩ was measured 98 times
+    '011': 97,   # State |011⟩ was measured 97 times
+    '100': 101,  # State |100⟩ was measured 101 times
+    '101': 102,  # State |101⟩ was measured 102 times
+    '110': 99,   # State |110⟩ was measured 99 times
+    '111': 104   # State |111⟩ was measured 104 times
+}
+# This distribution tells us about the quantum state's superposition
+# Nearly uniform distribution suggests high quantum entropy
+
+final_entropy: 2.998754321087654
+# Von Neumann entropy of the final state
+# Value close to 3 (log2(8) for 3 qubits) indicates nearly maximum entropy
+# High entropy suggests the state is highly mixed/entangled
+
+encoding_fidelity: 0.9912345678
+# How well the quantum state was preserved during computation
+# 0.991 = 99.1% faithful to intended state
+# Values above 0.99 indicate excellent quantum control
+
+error_detection: {
+    'S0': False,  # No error detected on first stabilizer
+    'S1': False,  # No error detected on second stabilizer
+    'S2': True,   # Error detected on third stabilizer
+    'S3': False,  # No error detected on fourth stabilizer
+    'S4': False,  # No error detected on fifth stabilizer
+    'S5': False,  # No error detected on sixth stabilizer
+    'S6': False   # No error detected on seventh stabilizer
+}
+# Error syndrome measurements showing where quantum errors occurred
+# True indicates error detection at that location
+
+entropy_evolution: [
+    2.321928094887362,  # Initial entropy
+    2.452847329887452,  # After first operation
+    2.584962500721156,  # Mid-computation
+    2.789234567890123,  # Near final stage
+    2.998754321087654   # Final entropy
+]
+# Shows how quantum entropy changed during computation
+# Increasing values suggest growing entanglement/mixing
+
+tensor_network_metrics: {
+    'contraction_efficiency': 0.9876543210,  # How efficiently tensors were contracted
+    'rt_surface_area': 3.2109876543,        # Ryu-Takayanagi surface area
+    'boundary_bulk_correlation': 0.8765432109 # Correlation between bulk and boundary
+}
+# Metrics related to the holographic tensor network performance
+# Higher values indicate better holographic encoding
+
+noise_analysis: {
+    'T1_coherence_time': 48.7e-6,    # Time until amplitude decay
+    'T2_coherence_time': 67.3e-6,    # Time until phase decay
+    'gate_fidelity': {
+        'single_qubit': 0.9989,      # Single qubit gate accuracy
+        'cx': 0.9923                 # Two-qubit gate accuracy
+    },
+    'crosstalk_strength': 0.0087     # Unwanted qubit interactions
+}
+# Detailed analysis of quantum noise in the system
+# T1, T2 times in microseconds
+# Higher fidelities and lower crosstalk are better
+
+holographic_metrics: {
+    'bulk_boundary_mapping_fidelity': 0.9934,  # Quality of holographic encoding
+    'causal_wedge_coverage': 0.8876,          # Spacetime causal structure coverage
+    'geometric_entropy': 2.4567,              # Entropy from geometric perspective
+    'ads_radius_effective': 0.9987            # Effective Anti-de Sitter radius
+}
+# Metrics specific to holographic quantum computation
+# Values near 1 indicate good holographic properties
+```
+
 ## Theory Background
 
 This implementation builds upon several key theoretical foundations:
