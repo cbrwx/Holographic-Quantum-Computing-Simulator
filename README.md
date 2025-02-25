@@ -86,7 +86,7 @@ Tensor networks provide the computational framework for implementing the hologra
 ### Basic Installation
 
     # Clone the repository
-    git clone https://github.com/yourusername/holographic-quantum-computing.git
+    git clone https://github.com/cbrwx/Holographic-Quantum-Computing-Simulator
     cd holographic-quantum-computing
 
     # Install required packages
@@ -95,7 +95,7 @@ Tensor networks provide the computational framework for implementing the hologra
 ### Development Installation
 
     # Clone the repository
-    git clone https://github.com/yourusername/holographic-quantum-computing.git
+    git clone https://github.com/cbrwx/Holographic-Quantum-Computing-Simulator
     cd holographic-quantum-computing
 
     # Create a virtual environment
