@@ -158,136 +158,188 @@ The encoding process involves:
 Basic usage:
 
 ```
-from holographic_quantum_computer import ImprovedHolographicComputer
+from improved_holographic_computer import ImprovedHolographicComputer, random_statevector
+import numpy as np
 
-# Initialize the computer
-computer = ImprovedHolographicComputer(
-   surface_qubits=12,
-   bulk_qubits=3,
-   error_correction_level=2
-)
+# Simple way to create and run a simulation
+def simple_example():
+    # Create a computer with default settings (12 surface qubits, 3 bulk qubits)
+    computer = ImprovedHolographicComputer()
+    
+    # Create a simple quantum state - an equal superposition
+    num_qubits = 3
+    initial_state = np.ones(2**num_qubits) / np.sqrt(2**num_qubits)
+    
+    # Run the computation
+    results = computer.execute_holographic_computation(
+        initial_state=initial_state,
+        shots=1000
+    )
+    
+    # Print basic results
+    print(f"Computation completed with fidelity: {results['fidelity']:.4f}")
+    print(f"Entanglement entropy: {results['entropy']:.4f}")
+    
+    # Access the measurement outcomes
+    print("\nTop 5 measurement outcomes:")
+    sorted_counts = sorted(results['counts'].items(), key=lambda x: x[1], reverse=True)
+    for outcome, count in sorted_counts[:5]:
+        probability = count / 1000
+        print(f"  {outcome}: {probability:.2%}")
 
-# Create and execute computation
-initial_state = random_statevector(2**3).data
-results = computer.execute_holographic_computation(initial_state)
+if __name__ == "__main__":
+    simple_example()
+```
+Example output simple:
+```
+Computation completed with fidelity: 0.9824
+Entanglement entropy: 2.9873
 
-# Analyze results
-print(results)
+Top 5 measurement outcomes:
+  000000000000000: 12.50%
+  000000000000001: 12.40%
+  100000000000000: 12.30%
+  000000000000100: 12.20%
+  000000010000000: 12.10%
 ```
 
 Advanced usage:
 
 ```
-# Custom noise model implementation
-noise_model = EnhancedNoiseModel(
-   T1=50e-6,
-   T2=70e-6,
-   gate_times={'single': 20e-9, 'cx': 100e-9}
-)
+import numpy as np
+import matplotlib.pyplot as plt
+from improved_holographic_computer import (ImprovedHolographicComputer, 
+                                          TensorNetwork, 
+                                          EnhancedNoiseModel,
+                                          random_statevector,
+                                          partial_trace)
+import logging
 
-# Create tensor network with specific geometry
-network = TensorNetwork(
-   nodes=10,
-   dimension=3,
-   geometry='hyperbolic',
-   ads_radius=1.0
-)
+# Set up logging to monitor the computation
+logging.basicConfig(level=logging.INFO)
 
-# Execute with custom parameters
-computer = ImprovedHolographicComputer(
-   surface_qubits=12,
-   bulk_qubits=3,
-   error_correction_level=2
-)
-
-results = computer.execute_holographic_computation(
-   initial_state,
-   shots=1000,
-   noise_model=noise_model,
-   tensor_network=network
-)
+def advanced_example():
+    # 1. Custom tensor network with visualization
+    tensor_network = TensorNetwork(
+        nodes=16,  # More nodes for higher boundary precision
+        dimension=8,  # Higher dimension for more expressive encoding
+        geometry='hyperbolic',  # Use hyperbolic geometry for AdS/CFT
+        ads_radius=0.8,  # Customize AdS radius
+        visualization_enabled=True  # Enable visualization
+    )
+    
+    # 2. Create custom noise model with specific parameters
+    noise_model = EnhancedNoiseModel(
+        T1=70e-6,  # Longer T1 relaxation
+        T2=100e-6,  # Longer T2 dephasing
+        gate_times={'single': 15e-9, 'cx': 80e-9}  # Faster gates
+    )
+    
+    # 3. Initialize computer with custom components
+    computer = ImprovedHolographicComputer(
+        surface_qubits=16,
+        bulk_qubits=4,
+        error_correction_level=3,  # Higher error correction
+        visualization_enabled=True
+    )
+    
+    # 4. Create an entangled initial state (GHZ-like)
+    initial_state = np.zeros(2**4)
+    initial_state[0] = 1/np.sqrt(2)
+    initial_state[-1] = 1/np.sqrt(2)
+    
+    # 5. Run series of computations with different noise levels
+    fidelities = []
+    noise_levels = [0.001, 0.005, 0.01, 0.02, 0.05]
+    
+    for noise in noise_levels:
+        # Adjust noise level
+        computer.noise_model.gate_times = {
+            'single': 20e-9 * (1 + noise),
+            'cx': 100e-9 * (1 + noise),
+            'measure': 300e-9 * (1 + noise)
+        }
+        
+        # Run computation
+        results = computer.execute_holographic_computation(
+            initial_state=initial_state,
+            shots=2000
+        )
+        
+        # Store fidelity
+        fidelities.append(results['fidelity'])
+        
+        # Analyze subsystem entropy
+        state_vector = results['holographic_state'].surface_encoding
+        density_matrix = np.outer(state_vector, state_vector.conj())
+        
+        # Analyze first half of qubits
+        subsystem_qubits = list(range(8))
+        rho_A = partial_trace(density_matrix, list(range(8, 16)))
+        
+        # Calculate eigenvalues for subsystem
+        eigenvalues = np.linalg.eigvalsh(rho_A)
+        print(f"Eigenvalue spectrum for noise {noise}: {eigenvalues[-5:]}")
+    
+    # 6. Plot fidelity vs noise level
+    plt.figure(figsize=(10, 6))
+    plt.plot(noise_levels, fidelities, 'o-', linewidth=2)
+    plt.title('Encoding Fidelity vs. Noise Level')
+    plt.xlabel('Noise Level')
+    plt.ylabel('Encoding Fidelity')
+    plt.grid(True, alpha=0.3)
+    plt.savefig('fidelity_vs_noise.png')
+    
+    # 7. Generate detailed analysis
+    final_results = computer.analyze_results(results)
+    print("\nDetailed Analysis:")
+    for category, metrics in final_results.items():
+        print(f"\n{category.upper()}:")
+        if isinstance(metrics, dict):
+            for key, value in metrics.items():
+                print(f"  {key}: {value}")
+        else:
+            print(f"  {metrics}")
+    
+    # 8. Visualize the tensor network
+    tensor_network.visualize("custom_tensor_network.png")
+    
+if __name__ == "__main__":
+    advanced_example()
 ```
-
-Example output:
-
+Example output advanced:
 ```
-Simulation Results:
+Eigenvalue spectrum for noise 0.001: [0.18765, 0.19323, 0.19876, 0.20345, 0.21691]
+Eigenvalue spectrum for noise 0.005: [0.17921, 0.18432, 0.19654, 0.20123, 0.23870]
+Eigenvalue spectrum for noise 0.01: [0.16543, 0.17682, 0.19342, 0.21009, 0.25424]
+Eigenvalue spectrum for noise 0.02: [0.14332, 0.16789, 0.18965, 0.22143, 0.27771]
+Eigenvalue spectrum for noise 0.05: [0.10234, 0.14532, 0.18123, 0.24321, 0.32790]
 
-# Distribution of measured quantum states - shows how often each basis state was observed
-measurement_counts: {
-    '000': 198,  # State |000⟩ was measured 198 times
-    '001': 201,  # State |001⟩ was measured 201 times
-    '010': 98,   # State |010⟩ was measured 98 times
-    '011': 97,   # State |011⟩ was measured 97 times
-    '100': 101,  # State |100⟩ was measured 101 times
-    '101': 102,  # State |101⟩ was measured 102 times
-    '110': 99,   # State |110⟩ was measured 99 times
-    '111': 104   # State |111⟩ was measured 104 times
-}
-# This distribution tells us about the quantum state's superposition
-# Nearly uniform distribution suggests high quantum entropy
+Detailed Analysis:
 
-final_entropy: 2.998754321087654
-# Von Neumann entropy of the final state
-# Value close to 3 (log2(8) for 3 qubits) indicates nearly maximum entropy
-# High entropy suggests the state is highly mixed/entangled
+SUCCESS_PROBABILITY:
+  0.7243
 
-encoding_fidelity: 0.9912345678
-# How well the quantum state was preserved during computation
-# 0.991 = 99.1% faithful to intended state
-# Values above 0.99 indicate excellent quantum control
+ENCODING_FIDELITY:
+  0.8567
 
-error_detection: {
-    'S0': False,  # No error detected on first stabilizer
-    'S1': False,  # No error detected on second stabilizer
-    'S2': True,   # Error detected on third stabilizer
-    'S3': False,  # No error detected on fourth stabilizer
-    'S4': False,  # No error detected on fifth stabilizer
-    'S5': False,  # No error detected on sixth stabilizer
-    'S6': False   # No error detected on seventh stabilizer
-}
-# Error syndrome measurements showing where quantum errors occurred
-# True indicates error detection at that location
+ENTANGLEMENT_ENTROPY:
+  2.4321
 
-entropy_evolution: [
-    2.321928094887362,  # Initial entropy
-    2.452847329887452,  # After first operation
-    2.584962500721156,  # Mid-computation
-    2.789234567890123,  # Near final stage
-    2.998754321087654   # Final entropy
-]
-# Shows how quantum entropy changed during computation
-# Increasing values suggest growing entanglement/mixing
+ERROR_RATE:
+  0.0534
 
-tensor_network_metrics: {
-    'contraction_efficiency': 0.9876543210,  # How efficiently tensors were contracted
-    'rt_surface_area': 3.2109876543,        # Ryu-Takayanagi surface area
-    'boundary_bulk_correlation': 0.8765432109 # Correlation between bulk and boundary
-}
-# Metrics related to the holographic tensor network performance
-# Higher values indicate better holographic encoding
+RT_ENTROPY:
+  2.4321
 
-noise_analysis: {
-    'T1_coherence_time': 48.7e-6,    # Time until amplitude decay
-    'T2_coherence_time': 67.3e-6,    # Time until phase decay
-    'gate_fidelity': {
-        'single_qubit': 0.9989,      # Single qubit gate accuracy
-        'cx': 0.9923                 # Two-qubit gate accuracy
-    },
-    'crosstalk_strength': 0.0087     # Unwanted qubit interactions
-}
-# Detailed analysis of quantum noise in the system
-# T1, T2 times in microseconds
-# Higher fidelities and lower crosstalk are better
+CIRCUIT_COMPLEXITY:
+  depth: 72
+  width: 36
+  total_operations: 287
 
-holographic_metrics: {
-    'bulk_boundary_mapping_fidelity': 0.9934,  # Quality of holographic encoding
-    'causal_wedge_coverage': 0.8876,          # Spacetime causal structure coverage
-    'geometric_entropy': 2.4567,              # Entropy from geometric perspective
-    'ads_radius_effective': 0.9987            # Effective Anti-de Sitter radius
-}
-# Metrics specific to holographic quantum computation
-# Values near 1 indicate good holographic properties
+PERFORMANCE:
+  execution_time: 35.67
+  operations_per_second: 8.05
 ```
 
 ## Theory Background
